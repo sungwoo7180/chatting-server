@@ -11,10 +11,13 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
     // 바텀 네비게이션 2번째 아이템을 클릭했을 때, 개인 채팅방 목록을 조회하는 메소드
     // user_id 를 기반으로 OneToOneChatRoom 을 조회하는 메소드
-    Optional<OneToOneChatRoom> findOneToOneChatRoomByUserId(Long userId);
+    Optional<OneToOneChatRoom> findOneToOneChatRoomByChatRoomUsersUserId(Long userId);
 
 
     // 바텀 네비게이션 3번째 아이템을 클릭했을 때, 그룹 채팅방 목록을 조회하는 메소드
     // user_id 를 기반으로 GroupChatRoom 을 조회하는 메소드
-    Optional<GroupChatRoom> findGroupChatRoomByUserId(Long userId);
+    Optional<GroupChatRoom> findGroupChatRoomByChatRoomUsersUserId(Long userId);
+
+
+
 }
