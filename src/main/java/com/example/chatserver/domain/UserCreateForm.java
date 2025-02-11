@@ -20,6 +20,9 @@ public class UserCreateForm {  // DTO 클래스 역할을 하는 Form 클래스
     @Email
     private String email;
 
+    @NotEmpty(message = "닉네임은 필수항목입니다.")
+    private String nickName;
+
     // 이메일 인증 번호 Check 로직 -> 추가 예정 ( Google SMTP 를 사용 )
 
     // 가입 일자 검증 예제

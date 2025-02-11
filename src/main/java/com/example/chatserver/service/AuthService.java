@@ -1,12 +1,14 @@
 package com.example.chatserver.service;
 
 import com.example.chatserver.config.constant.UserRole;
+import com.example.chatserver.config.constant.UserStatus;
 import com.example.chatserver.config.jwt.TokenProvider;
 import com.example.chatserver.domain.ChatUserPrincipal;
 import com.example.chatserver.domain.User;
 import com.example.chatserver.dto.AccessTokenDTO;
 import com.example.chatserver.repository.AuthRepository;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.Null;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -24,7 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@Transactional // All or Nothing -> 실패 시 발생하는 예외 처리를 위해 사용
+//@Transactional // All or Nothing -> 실패 시 발생하는 예외 처리를 위해 사용
 @RequiredArgsConstructor
 public class AuthService implements UserDetailsService {
 
@@ -48,15 +50,15 @@ public class AuthService implements UserDetailsService {
         if (registeredUser.isEmpty()) {
             throw new UsernameNotFoundException(loginId + " 사용자를 찾을 수 없습니다.");
         }
-        User user = registeredUser.get();
-        return ChatUserPrincipal.fromUserEntity(user);
+        return ChatUserPrincipal.fromUserEntity(registeredUser.get());
     }
 
     // CRUD 기능 구현
     public void create(
             String loginId,
             String password1,
-            String email
+            String email,
+            String nickName
     ) {
         User newUser = new User();
         newUser.setLoginId(loginId);
@@ -65,21 +67,28 @@ public class AuthService implements UserDetailsService {
         );
         newUser.setEmail(email);
         newUser.setRole(UserRole.USER);  // Enum default validation 필수 체크됨
+        newUser.setStatus(UserStatus.ACTIVE);  // Enum default validation 필수 체크됨
+        newUser.setNickName(nickName);
 
         // 중복 유저 체크
         validateDuplicateUser(newUser);
-        User savedUser = authRepository.save(newUser);
+        authRepository.save(newUser);
+        // User savedUser = authRepository.save(newUser);
     }
 
     // 중복 유저 검사 메서드 선언
     public void validateDuplicateUser(User user) {
         // login id 중복 검사
-        if (existsByLoginId(user.getLoginId())) {
+        if (authRepository.existsByNickName(user.getLoginId())) {
             throw new IllegalStateException("이미 존재하는 ID 입니다.");
         }
         // email 중복 검사
         if (existsByEmail(user.getEmail())) {
             throw new IllegalStateException("이미 존재하는 Email 입니다.");
+        }
+        // nickname 중복 검사
+        if (existsByNickName(user.getNickName())) {
+            throw new IllegalStateException("이미 존재하는 닉네임 입니다.");
         }
     }
 
@@ -91,11 +100,15 @@ public class AuthService implements UserDetailsService {
         return authRepository.existsByEmail(username);
     }
 
+    public boolean existsByNickName(String nickname) {
+        return authRepository.existsByNickName(nickname);
+    }
+
     public AccessTokenDTO getAccessToken(User user) {
         // 1) Spring Security 로그인 전용 메서드 loadUserByUsername 사용해 인증
         UserDetails userDetails;
         try {
-            userDetails = loadUserByUsername(user.getEmail());
+            userDetails = loadUserByUsername(user.getLoginId());
         } catch (Exception e) {
             return null;
         }

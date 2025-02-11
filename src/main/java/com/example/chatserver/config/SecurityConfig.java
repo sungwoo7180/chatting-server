@@ -14,17 +14,22 @@ import org.springframework.security.web.header.writers.frameoptions.XFrameOption
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
-@EnableWebSecurity  // URL 요청에 대한 Spring Security 동작 활성화
+@EnableWebSecurity  // URL 요청에 대한 Spring Security 동작 활성화 (URL 요청에 대한 인가, 인증 처리)
 @RequiredArgsConstructor
 public class SecurityConfig {
+    // JWT 토큰 생성 및 검증에 사용할 컴포넌트를 주입받음
     private final TokenProvider tokenProvider;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // 1. 요청 인가 설정
+                // 현재는 모든 URL("/**") 에 대해 접근을 허용.
+                // 만약 API 테스트 시 인증( 폼 로그인 )을 반드시 사용하려면, 아래 permitALL() 을 수정해야 함.
             .authorizeHttpRequests(  // 요청 인가 여부 결정을 위한 조건 판단
                 (authorizeHttpRequests) ->
                     authorizeHttpRequests.requestMatchers(
+                            // TODO : 모든 요청을 허용 하는 대신, 로그인 하지 않으면 특정 페이지에 접근 할 수 없도록 수정 할 필요가 있음.
                         new AntPathRequestMatcher("/**")
 //                        , new AntPathRequestMatcher("/**", HttpMethod.POST.name())
 //                        , new AntPathRequestMatcher("/**", HttpMethod.PUT.name())
@@ -57,10 +62,13 @@ public class SecurityConfig {
 //            .csrf(csrf -> csrf
 //                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
 //            )
+            // 2. CSRF 설정
+                // /api/** 및 /users/login 경로는 CSRF 보호를 무시함.
+                // (폼 기반 로그인이나 API 테스트 시 CSRF 토큰 문제를 피하기 위함)
             .csrf(
                 (csrf) -> csrf.ignoringRequestMatchers(
                     new AntPathRequestMatcher("/api/**")
-                    , new AntPathRequestMatcher("/users/login")
+                    , new AntPathRequestMatcher("/api/auth/login")
                 )
             )
 //                (csrf) ->
@@ -72,6 +80,8 @@ public class SecurityConfig {
 //                        // , new AntPathRequestMatcher("/signup")
 //                    )
 //            )
+            // 3. 헤더 설정
+            // X-Frame-Options 헤더를 SAMEORIGIN 으로 설정하여, 동일 도메인 내에서 iframe 사용을 허용함.
             .headers(
                 (headers) ->
                     headers.addHeaderWriter(
@@ -85,16 +95,17 @@ public class SecurityConfig {
                 (formLogin) ->
                     formLogin  // Controller 에 PostMapping URL 바인딩이 없어도
                                // POST 요청을 아래 라인에서 수신하고 인증 처리
-                        .loginPage("/users/login")
-                        .defaultSuccessUrl("/")
+                            .loginPage("/api/auth/login")  // 로그인 페이지 URL 지정
+                            .defaultSuccessUrl("/", true)  // 로그인 성공 후 이동할 페이지 (강제 이동)
+                            .failureUrl("/api/auth/login?error=true")  // 로그인 실패 시 이동할 페이지
 //                AbstractHttpConfigurer::disable
             )
             .logout(
                 (logout) ->
                     logout
-                        .logoutRequestMatcher(new AntPathRequestMatcher("/users/logout"))
-                        .logoutSuccessUrl("/")
-                        .invalidateHttpSession(true)
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/api/auth/logout"))
+                        .logoutSuccessUrl("/")       // 로그아웃 성공 후 메인 페이지로 이동
+                        .invalidateHttpSession(true) // 세션 무효화
             )
 //            .sessionManagement(
 //                (sessionConfig) -> {

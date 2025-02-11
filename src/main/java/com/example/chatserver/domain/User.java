@@ -2,6 +2,7 @@ package com.example.chatserver.domain;
 
 import com.example.chatserver.config.constant.UserRole;
 import com.example.chatserver.config.constant.UserStatus;
+import com.example.chatserver.dto.UserCreateRequestDTO;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,7 +30,7 @@ public class User {
     private String loginId;
 
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String nickName;
 
 
@@ -45,7 +46,7 @@ public class User {
     private String profileImageUrl;
 
 
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     // @CreatedDate        // Entity 가 생성되어 저장될 때 시간이 자동 저장, Spring Data JPA 의 Auditing 기능을 활성화
     private LocalDateTime createdAt;
 
@@ -71,6 +72,15 @@ public class User {
 
     }
 
+    public User(UserCreateRequestDTO dto, String encodedPassword) {
+        this.loginId = dto.getLoginId();
+        this.nickName = dto.getNickName();
+        this.email = dto.getEmail();
+        this.password = encodedPassword;
+        this.createdAt = LocalDateTime.now();
+        this.role = UserRole.USER;
+        this.status = UserStatus.ACTIVE;
+    }
 
     // 엔티티가 생성될 때 -> 현재 날짜를 값으로 설정
     @PrePersist

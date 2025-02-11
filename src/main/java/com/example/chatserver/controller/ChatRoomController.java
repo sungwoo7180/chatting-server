@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/chatroom")
 public class ChatRoomController {
 
-    @Autowired
+
     private final ChatRoomService chatRoomService;
 
     @Autowired

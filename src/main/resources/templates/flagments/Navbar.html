@@ -17,15 +17,15 @@
                 <li class="nav-item">
                     <a class="nav-link"
                        sec:authorize="isAnonymous()"
-                       th:href="@{/users/login}">로그인</a>
+                       th:href="@{/api/auth/login}">로그인</a>
                     <a class="nav-link"
                        sec:authorize="isAuthenticated()"
-                       th:href="@{/users/logout}">로그아웃</a>
+                       th:href="@{/api/auth/logout}">로그아웃</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link"
                        sec:authorize="isAnonymous()"
-                       th:href="@{/users/signup}">회원가입</a>
+                       th:href="@{/api/auth/signup}">회원가입</a>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

@@ -1,3 +1,4 @@
+<!-- login_form.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
@@ -13,10 +14,10 @@
             <h4>로그인</h4>
         </div>
     </div>
-    <form th:action="@{/users/login}" method="post">
+    <form th:action="@{/api/auth/login}" method="post">
         <div class="mb-3">
-            <label for="username" class="form-label">사용자 ID (email)</label>
-            <input id="username" name="username" type="text" class="form-control">
+            <label for="loginId" class="form-label">사용자 ID (email)</label>
+            <input id="loginId" name="loginId" type="text" class="form-control">
             <!--      <label for="email" class="form-label">사용자 ID (email)</label>-->
             <!--      <input id="email" name="email" type="text" class="form-control">-->
         </div>

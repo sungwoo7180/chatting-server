@@ -7,14 +7,24 @@ import com.example.chatserver.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 //import static com.example.chatserver.domain.QUser.user;
 // todo : 관리자 페이지
 // Spring Security 에서 유저 Role 정보를 읽기 위한 import
+import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 
-@RestController
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@Controller
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -31,24 +41,42 @@ public class AuthController {
 
     // 회원가입: 간단하게 User 엔티티를 입력받아 저장 (실제 구현 시 DTO, 검증, 이메일 전송 등을 추가)
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@Valid @RequestBody UserCreateForm userCreateForm, BindingResult bindingResult) {
+    public String signup(@ModelAttribute @Valid UserCreateForm userCreateForm, BindingResult bindingResult) {
         // 1. 입력값 검증
         if (bindingResult.hasErrors()) {
-            return ResponseEntity.badRequest().body("입력값에 오류가 있습니다.");
+            return "signup_form";
         }
         // 2. 비밀번호 확인 검사
         if (!userCreateForm.getPassword1().equals(userCreateForm.getPassword2())) {
-            return ResponseEntity.badRequest().body("패스워드 확인 값이 일치하지 않습니다.");
+            bindingResult.rejectValue(
+                    "password2",
+                    "passwordDoubleCheckError",
+                    "패스워드 확인 값이 일치하지 않습니다."
+            );
+            return "signup_form";
         }
-        // 3. 회원가입 처리
+        // 3. 회원가입 처리 - 백엔드 validation
         try {
-            authService.create(userCreateForm.getLoginId(), userCreateForm.getPassword1(), userCreateForm.getEmail());
+            authService.create(
+                    userCreateForm.getLoginId(),
+                    userCreateForm.getPassword1(),
+                    userCreateForm.getEmail(),
+                    userCreateForm.getNickName());
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            bindingResult.reject(
+                    "signupFailed",
+                    "이미 등록된 사용자 입니다."
+            );
+            return "signup_form";
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("회원가입 중 오류가 발생했습니다.");
+            bindingResult.reject(
+                    "signupFailed",
+                    e.getMessage()
+            );
+            return "signup_form";
         }
-        return ResponseEntity.ok("회원가입 성공");
+        // 4. 회원 가입 성공
+        return "redirect:/";
     }
 
     /**
@@ -73,7 +101,10 @@ public class AuthController {
         return ResponseEntity.ok(tokenDTO);
     }
 
-
+    @GetMapping("/login")
+    public String login() {
+        return "login_form";
+    }
 
     // 추가: 이메일 인증, 비밀번호 재설정 등 엔드포인트 구현 가능
 
